@@ -7,6 +7,7 @@ Backend project for AI-assisted workflow operations with approval gates, executi
 - create workflows with mixed agent and approval steps
 - start workflow execution until approval gates
 - approve or reject waiting workflows via decision endpoint
+- track failed steps with error context and retry them
 - inspect workflow and step state through list/detail APIs
 
 ## Quick Start
@@ -42,6 +43,12 @@ Start workflow:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/v1/workflows/{workflow_id}/start"
+```
+
+Retry failed workflow step:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/workflows/{workflow_id}/retry"
 ```
 
 ## License

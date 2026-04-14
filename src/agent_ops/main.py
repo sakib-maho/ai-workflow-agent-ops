@@ -71,3 +71,14 @@ def workflow_decision(workflow_id: str, payload: DecisionRequest) -> WorkflowVie
     except ValueError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     return to_view(workflow)
+
+
+@app.post("/v1/workflows/{workflow_id}/retry", response_model=WorkflowView, tags=["workflow"])
+def retry_workflow(workflow_id: str) -> WorkflowView:
+    try:
+        workflow = workflow_store.retry(workflow_id)
+    except KeyError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return to_view(workflow)

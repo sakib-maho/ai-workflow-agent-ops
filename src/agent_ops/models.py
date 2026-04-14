@@ -52,6 +52,7 @@ class WorkflowStepState(BaseModel):
     instructions: str
     status: WorkflowStatus
     attempts: int = 0
+    last_error: str = ""
 
 
 class WorkflowView(BaseModel):

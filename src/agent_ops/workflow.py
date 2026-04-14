@@ -29,6 +29,7 @@ class StepRecord:
     instructions: str
     status: WorkflowStatus = WorkflowStatus.pending
     attempts: int = 0
+    last_error: str = ""
 
 
 @dataclass(slots=True)
@@ -103,6 +104,21 @@ class WorkflowStore:
             workflow.updated_at = utc_now()
         return workflow
 
+    def retry(self, workflow_id: str) -> WorkflowRecord:
+        workflow = self.get(workflow_id)
+        current = self._current_step(workflow)
+        if current is None:
+            raise ValueError("workflow has no active step to retry")
+        if workflow.status != WorkflowStatus.failed:
+            raise ValueError("workflow is not in failed state")
+        if current.step_type == StepType.approval:
+            raise ValueError("approval steps cannot be retried")
+
+        current.status = WorkflowStatus.pending
+        current.last_error = ""
+        self._run_until_gate(workflow)
+        return workflow
+
     def clear(self) -> None:
         self._workflows.clear()
 
@@ -116,7 +132,14 @@ class WorkflowStore:
                 workflow.updated_at = utc_now()
                 return
             step.attempts += 1
+            if "FAIL_ONCE" in step.instructions and step.attempts == 1:
+                step.status = WorkflowStatus.failed
+                step.last_error = "Simulated transient tool failure"
+                workflow.status = WorkflowStatus.failed
+                workflow.updated_at = utc_now()
+                return
             step.status = WorkflowStatus.completed
+            step.last_error = ""
             workflow.current_step_index += 1
 
         workflow.status = WorkflowStatus.completed
@@ -153,6 +176,7 @@ def to_view(record: WorkflowRecord) -> WorkflowView:
                 instructions=step.instructions,
                 status=step.status,
                 attempts=step.attempts,
+                last_error=step.last_error,
             )
             for step in record.steps
         ],
