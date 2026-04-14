@@ -2,14 +2,12 @@
 
 Backend project for AI-assisted workflow operations with approval gates, execution tracking, and retry handling.
 
-## Phase
+## Current Capabilities
 
-This is the initial scaffold commit. Next commits will add:
-
-- workflow creation and step execution simulation
-- approval queue and decision endpoints
-- retry logic with failure tracking
-- tests, CI, and Docker runtime
+- create workflows with mixed agent and approval steps
+- start workflow execution until approval gates
+- approve or reject waiting workflows via decision endpoint
+- inspect workflow and step state through list/detail APIs
 
 ## Quick Start
 
@@ -21,6 +19,30 @@ uvicorn agent_ops.main:app --reload
 ```
 
 Docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+## API Flow Example
+
+Create workflow:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/workflows" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Support ticket escalation",
+    "requester": "ops-bot",
+    "steps": [
+      {"name": "Classify ticket", "step_type": "agent", "instructions": "Label ticket severity"},
+      {"name": "Supervisor review", "step_type": "approval", "instructions": "Approve escalation"},
+      {"name": "Notify on-call", "step_type": "agent", "instructions": "Send pager alert"}
+    ]
+  }'
+```
+
+Start workflow:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/workflows/{workflow_id}/start"
+```
 
 ## License
 
